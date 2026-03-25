@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery App</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: -apple-system, sans-serif;
+    background: #0f0f0f;
+    color: white;
+}
+
+.header {
+    padding: 15px;
+    text-align: center;
+    background: rgba(20,20,20,0.6);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    padding: 10px;
+}
+
+.card img, .card video {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+.navbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: rgba(20,20,20,0.7);
+    backdrop-filter: blur(10px);
+    padding: 10px 0;
+}
+
+.nav-item {
+    color: #aaa;
+}
+
+.nav-item.active {
+    color: white;
+}
+
+/* VIEWERS */
+.viewer {
+    position: fixed;
+    inset: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transform: scale(1.05);
+    transition: 0.25s;
+    pointer-events: none;
+}
+
+.viewer.show {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.viewer img, .viewer video {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 26px;
+}
+
+.counter {
+    position: absolute;
+    bottom: 20px;
+}
+
+.spacer { height: 70px; }
+</style>
+</head>
+
+<body>
+
+<div class="header">Gallery</div>
+
+<div id="gallery" class="gallery"></div>
+<div class="spacer"></div>
+
+<div class="navbar">
+    <div class="nav-item active" onclick="loadImages('date1',29,this)">Date 1</div>
+    <div class="nav-item" onclick="loadImages('date2',22,this)">Date 2</div>
+    <div class="nav-item" onclick="loadImages('date3',30,this)">Date 3</div>
+    <div class="nav-item" onclick="loadImages('date4',66,this)">Date 4</div>
+    <div class="nav-item" onclick="loadImages('date5',40,this)">Date 5</div>
+    <div class="nav-item" onclick="loadVideos(3,this)">Videos</div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div id="viewer" class="viewer">
+    <div class="close" onclick="closeViewer()">✕</div>
+    <img id="viewerImg">
+    <div id="counter" class="counter"></div>
+</div>
+
+<!-- VIDEO VIEWER -->
+<div id="videoViewer" class="viewer">
+    <div class="close" onclick="closeVideo()">✕</div>
+    <video id="videoPlayer" controls></video>
+</div>
+
+<script>
+let currentImages = [];
+let currentIndex = 0;
+
+/* LOAD IMAGES */
+function loadImages(folder, count, el) {
+    setActive(el);
+    let g = document.getElementById('gallery');
+    g.innerHTML = "";
+    currentImages = [];
+
+    for (let i = 1; i <= count; i++) {
+        let path = `images/${folder}/${i}.jpeg`;
+        currentImages.push(path);
+
+        let img = document.createElement("img");
+        img.src = path;
+        img.onclick = () => openViewer(i - 1);
+
+        let card = document.createElement("div");
+        card.className = "card";
+        card.appendChild(img);
+        g.appendChild(card);
+    }
+}
+
+/* LOAD VIDEOS */
+function loadVideos(count, el) {
+    setActive(el);
+    let g = document.getElementById('gallery');
+    g.innerHTML = "";
+
+    for (let i = 1; i <= count; i++) {
+        let path = `images/videos/${i}.mp4`;
+
+        let video = document.createElement("video");
+        video.src = path;
+        video.muted = true;
+        video.onclick = () => openVideo(path);
+
+        let card = document.createElement("div");
+        card.className = "card";
+        card.appendChild(video);
+        g.appendChild(card);
+    }
+}
+
+/* ACTIVE TAB */
+function setActive(el){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+}
+
+/* IMAGE VIEWER */
+function openViewer(i){
+    currentIndex=i;
+    document.getElementById('viewer').classList.add("show");
+    document.getElementById('viewerImg').src=currentImages[i];
+    updateCounter();
+}
+
+function closeViewer(){
+    document.getElementById('viewer').classList.remove("show");
+}
+
+/* COUNTER */
+function updateCounter(){
+    document.getElementById('counter').innerText =
+    (currentIndex+1)+" / "+currentImages.length;
+}
+
+/* SIMPLE SWIPE */
+let startX=0;
+viewer.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
+
+viewer.addEventListener('touchend',e=>{
+    let endX=e.changedTouches[0].clientX;
+    if(startX-endX>50 && currentIndex<currentImages.length-1){
+        currentIndex++;
+    }
+    if(endX-startX>50 && currentIndex>0){
+        currentIndex--;
+    }
+    document.getElementById('viewerImg').src=currentImages[currentIndex];
+    updateCounter();
+});
+
+/* VIDEO VIEWER */
+function openVideo(src){
+    let v=document.getElementById('videoViewer');
+    let p=document.getElementById('videoPlayer');
+    p.src=src;
+    v.classList.add("show");
+}
+
+function closeVideo(){
+    let v=document.getElementById('videoViewer');
+    let p=document.getElementById('videoPlayer');
+    p.pause();
+    p.src="";
+    v.classList.remove("show");
+}
+
+/* DEFAULT */
+loadImages('date1',29,document.querySelector('.nav-item'));
+</script>
+
+</body>
+</html>
