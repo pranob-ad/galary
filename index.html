@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gallery App</title>
+<title>Memory Timeline</title>
 
 <style>
 body {
@@ -13,49 +13,58 @@ body {
     color: white;
 }
 
+/* HEADER */
 .header {
-    padding: 15px;
     text-align: center;
-    background: rgba(20,20,20,0.6);
+    padding: 15px;
+    font-size: 18px;
+    background: rgba(20,20,20,0.7);
     backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
 }
 
-.gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px;
+/* TIMELINE */
+.timeline {
     padding: 10px;
 }
 
-.card img, .card video {
+/* SECTION */
+.section {
+    margin-bottom: 30px;
+}
+
+/* DATE */
+.date {
+    font-size: 16px;
+    margin: 10px 5px;
+    opacity: 0.7;
+    border-left: 3px solid #555;
+    padding-left: 10px;
+    transition: 0.3s;
+}
+
+.date.active {
+    color: #00ffcc;
+    border-left: 3px solid #00ffcc;
+    font-weight: bold;
+}
+
+/* GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+    gap: 8px;
+}
+
+.grid img {
     width: 100%;
     height: 160px;
     object-fit: cover;
     border-radius: 14px;
 }
 
-.navbar {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    background: rgba(20,20,20,0.7);
-    backdrop-filter: blur(10px);
-    padding: 10px 0;
-}
-
-.nav-item {
-    color: #aaa;
-}
-
-.nav-item.active {
-    color: white;
-}
-
-/* VIEWERS */
+/* VIEWER */
 .viewer {
     position: fixed;
     inset: 0;
@@ -64,18 +73,16 @@ body {
     justify-content: center;
     align-items: center;
     opacity: 0;
-    transform: scale(1.05);
     transition: 0.25s;
     pointer-events: none;
 }
 
 .viewer.show {
     opacity: 1;
-    transform: scale(1);
     pointer-events: auto;
 }
 
-.viewer img, .viewer video {
+.viewer img {
     max-width: 100%;
     max-height: 100%;
 }
@@ -87,149 +94,146 @@ body {
     font-size: 26px;
 }
 
-.counter {
-    position: absolute;
-    bottom: 20px;
+/* REVEAL ANIMATION */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: 0.6s;
 }
 
-.spacer { height: 70px; }
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* REELS */
+.reel-container {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+}
+
+.reel-container video {
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+    scroll-snap-align: start;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">Gallery</div>
+<div class="header">❤️ Our Memories</div>
 
-<div id="gallery" class="gallery"></div>
-<div class="spacer"></div>
-
-<div class="navbar">
-    <div class="nav-item active" onclick="loadImages('date1',29,this)">Date 1</div>
-    <div class="nav-item" onclick="loadImages('date2',22,this)">Date 2</div>
-    <div class="nav-item" onclick="loadImages('date3',30,this)">Date 3</div>
-    <div class="nav-item" onclick="loadImages('date4',66,this)">Date 4</div>
-    <div class="nav-item" onclick="loadImages('date5',41,this)">Date 5</div>
-    <div class="nav-item" onclick="loadVideos(8,this)">Videos</div>
-</div>
+<div id="timeline" class="timeline"></div>
 
 <!-- IMAGE VIEWER -->
 <div id="viewer" class="viewer">
     <div class="close" onclick="closeViewer()">✕</div>
     <img id="viewerImg">
-    <div id="counter" class="counter"></div>
-</div>
-
-<!-- VIDEO VIEWER -->
-<div id="videoViewer" class="viewer">
-    <div class="close" onclick="closeVideo()">✕</div>
-    <video id="videoPlayer" controls></video>
 </div>
 
 <script>
-let currentImages = [];
-let currentIndex = 0;
+const timelineData = [
+    { folder: "date1", title: "3 January 2026 ❤️", count: 29 },
+    { folder: "date2", title: "7 January 2026 ✨", count: 22 },
+    { folder: "date3", title: "21 March 2026 🌙", count: 30 },
+    { folder: "date4", title: "23 March 2026 💫", count: 66 },
+    { folder: "date5", title: "25 March 2026 💖", count: 40 }
+];
 
-/* LOAD IMAGES */
-function loadImages(folder, count, el) {
-    setActive(el);
-    let g = document.getElementById('gallery');
-    g.innerHTML = "";
-    currentImages = [];
+/* BUILD TIMELINE */
+function buildTimeline() {
+    let container = document.getElementById("timeline");
 
-    for (let i = 1; i <= count; i++) {
-        let path = `images/${folder}/${i}.jpeg`;
-        currentImages.push(path);
+    timelineData.forEach(data => {
 
-        let img = document.createElement("img");
-        img.src = path;
-        img.onclick = () => openViewer(i - 1);
+        let section = document.createElement("div");
+        section.className = "section reveal";
 
-        let card = document.createElement("div");
-        card.className = "card";
-        card.appendChild(img);
-        g.appendChild(card);
-    }
-}
+        let title = document.createElement("div");
+        title.className = "date";
+        title.innerText = data.title;
 
-/* LOAD VIDEOS */
-function loadVideos(count, el) {
-    setActive(el);
-    let g = document.getElementById('gallery');
-    g.innerHTML = "";
+        let grid = document.createElement("div");
+        grid.className = "grid";
 
-    for (let i = 1; i <= count; i++) {
-        let path = `images/videos/${i}.mp4`;
+        for (let i = 1; i <= data.count; i++) {
+            let img = document.createElement("img");
+            img.src = `images/${data.folder}/${i}.jpeg`;
+            img.onclick = () => openViewer(img.src);
+            grid.appendChild(img);
+        }
 
+        section.appendChild(title);
+        section.appendChild(grid);
+        container.appendChild(section);
+    });
+
+    /* REELS */
+    let reels = document.createElement("div");
+    reels.className = "section reveal";
+
+    let reelTitle = document.createElement("div");
+    reelTitle.className = "date";
+    reelTitle.innerText = "Reels 🎥";
+
+    let reelContainer = document.createElement("div");
+    reelContainer.className = "reel-container";
+
+    for (let i = 1; i <= 3; i++) {
         let video = document.createElement("video");
-        video.src = path;
-        video.muted = true;
-        video.onclick = () => openVideo(path);
-
-        let card = document.createElement("div");
-        card.className = "card";
-        card.appendChild(video);
-        g.appendChild(card);
+        video.src = `images/videos/${i}.mp4`;
+        video.controls = true;
+        reelContainer.appendChild(video);
     }
-}
 
-/* ACTIVE TAB */
-function setActive(el){
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    el.classList.add('active');
+    reels.appendChild(reelTitle);
+    reels.appendChild(reelContainer);
+    container.appendChild(reels);
 }
 
 /* IMAGE VIEWER */
-function openViewer(i){
-    currentIndex=i;
+function openViewer(src) {
     document.getElementById('viewer').classList.add("show");
-    document.getElementById('viewerImg').src=currentImages[i];
-    updateCounter();
+    document.getElementById('viewerImg').src = src;
 }
 
-function closeViewer(){
+function closeViewer() {
     document.getElementById('viewer').classList.remove("show");
 }
 
-/* COUNTER */
-function updateCounter(){
-    document.getElementById('counter').innerText =
-    (currentIndex+1)+" / "+currentImages.length;
-}
+/* SCROLL REVEAL */
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+        }
+    });
+}, { threshold: 0.2 });
 
-/* SIMPLE SWIPE */
-let startX=0;
-viewer.addEventListener('touchstart',e=>startX=e.touches[0].clientX);
+/* INIT */
+buildTimeline();
 
-viewer.addEventListener('touchend',e=>{
-    let endX=e.changedTouches[0].clientX;
-    if(startX-endX>50 && currentIndex<currentImages.length-1){
-        currentIndex++;
-    }
-    if(endX-startX>50 && currentIndex>0){
-        currentIndex--;
-    }
-    document.getElementById('viewerImg').src=currentImages[currentIndex];
-    updateCounter();
+setTimeout(() => {
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}, 100);
+
+/* DATE HIGHLIGHT */
+window.addEventListener("scroll", () => {
+    let sections = document.querySelectorAll(".section");
+
+    sections.forEach(sec => {
+        let rect = sec.getBoundingClientRect();
+
+        if (rect.top < 150 && rect.bottom > 150) {
+            document.querySelectorAll(".date").forEach(d => d.classList.remove("active"));
+            let d = sec.querySelector(".date");
+            if (d) d.classList.add("active");
+        }
+    });
 });
-
-/* VIDEO VIEWER */
-function openVideo(src){
-    let v=document.getElementById('videoViewer');
-    let p=document.getElementById('videoPlayer');
-    p.src=src;
-    v.classList.add("show");
-}
-
-function closeVideo(){
-    let v=document.getElementById('videoViewer');
-    let p=document.getElementById('videoPlayer');
-    p.pause();
-    p.src="";
-    v.classList.remove("show");
-}
-
-/* DEFAULT */
-loadImages('date1',29,document.querySelector('.nav-item'));
 </script>
 
 </body>
